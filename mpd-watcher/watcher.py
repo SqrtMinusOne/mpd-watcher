@@ -1,7 +1,11 @@
-from mpd import MPDClient
+import csv
+import os
+
 from datetime import datetime, timedelta
 
-LOG_FILE = '~/.mpd/mpd-watcher-log.csv'
+from mpd import MPDClient
+
+LOG_FILE = '/home/pavel/.mpd/mpd-watcher-log.csv'
 LISTENED_THRESHOLD = 0.5
 
 current_song = None
@@ -23,7 +27,15 @@ def write_song(song):
         'time': song['start_time'].isoformat(' ', 'seconds'),
         'type': evt_type
     }
-    print(event)
+
+    fieldnames = event.keys()
+    log_exists = os.path.exists(LOG_FILE)
+    mode = 'a' if log_exists else 'w'
+    with open(LOG_FILE, mode) as f:
+        writer = csv.DictWriter(f, fieldnames)
+        if not log_exists:
+            writer.writeheader()
+        writer.writerow(event)
 
 
 def get_current_song(mpd: MPDClient):
