@@ -1,10 +1,30 @@
 from mpd import MPDClient
 from datetime import datetime, timedelta
 
+LOG_FILE = '~/.mpd/mpd-watcher-log.csv'
+LISTENED_THRESHOLD = 0.5
+
 current_song = None
 
 def write_song(song):
-    print(song)
+    time_listened = (datetime.now() - song['start_time']).seconds
+    duration = float(song['duration'])
+    if (time_listened / duration > LISTENED_THRESHOLD):
+        evt_type = 'listened'
+    else:
+        evt_type = 'skipped'
+
+    event = {
+        'file': song['file'],
+        'artist': song.get('artist', ''),
+        'album_artist': song.get('albumartist', ''),
+        'title': song.get('title', ''),
+        'album': song.get('album'),
+        'time': song['start_time'].isoformat(' ', 'seconds'),
+        'type': evt_type
+    }
+    print(event)
+
 
 def get_current_song(mpd: MPDClient):
     status = mpd.status()
