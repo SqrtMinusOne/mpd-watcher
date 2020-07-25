@@ -7,6 +7,11 @@ from mpd import MPDClient
 
 LOG_FILE = '/home/pavel/.mpd/mpd-watcher-log.csv'
 LISTENED_THRESHOLD = 0.5
+CUSTOM_ATTRS = [
+    'musicbrainz_albumid',
+    'musicbrainz_artistid',
+    'musicbrainz_trackid'
+]
 
 current_song = None
 
@@ -25,7 +30,8 @@ def write_song(song):
         'title': song.get('title', ''),
         'album': song.get('album'),
         'time': song['start_time'].isoformat(' ', 'seconds'),
-        'type': evt_type
+        'type': evt_type,
+        **{ attr: song.get(attr, '') for attr in CUSTOM_ATTRS }
     }
 
     fieldnames = event.keys()
