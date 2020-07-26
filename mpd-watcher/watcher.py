@@ -1,11 +1,15 @@
 import csv
 import os
+import socket
+import sys
+import time
 
 from datetime import datetime, timedelta
 
 from mpd import MPDClient
 
 LOG_FILE = '/home/pavel/.mpd/mpd-watcher-log.csv'
+EXCEPTION_TIMEOUT = 5
 LISTENED_THRESHOLD = 0.5
 CUSTOM_ATTRS = [
     'musicbrainz_albumid',
@@ -14,6 +18,17 @@ CUSTOM_ATTRS = [
 ]
 
 current_song = None
+
+
+def get_lock(process_name):
+    get_lock._lock_socket = socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM)
+    try:
+        get_lock._lock_socket.bind('\0' + process_name)
+        print('Got the lock')
+    except socket.error:
+        print('Lock already exists, exiting')
+        sys.exit()
+
 
 def write_song(song):
     time_listened = (datetime.now() - song['start_time']).seconds
@@ -76,11 +91,17 @@ if __name__ == "__main__":
     last_error = datetime.now()
     error_count = 0
 
+    get_lock('mpd_watcher')
+
     while True:
         try:
             mpd = connect()
             watch(mpd)
         except Exception as exp:
+            print(repr(exp))
+            print(f'Waiting {EXCEPTION_TIMEOUT} seconds, error count: {error_count}')
+            time.sleep(EXCEPTION_TIMEOUT)
+
             if (datetime.now() - last_error).seconds > 60:
                 error_count = 0
             last_error = datetime.now()
