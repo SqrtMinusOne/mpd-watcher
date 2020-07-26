@@ -1,6 +1,7 @@
 import csv
 import os
 import socket
+import logging
 import sys
 import time
 
@@ -17,6 +18,12 @@ CUSTOM_ATTRS = [
     'musicbrainz_trackid'
 ]
 
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s %(message)s',
+    datefmt='%Y-%m-%d %H:%M:%S'
+)
+
 current_song = None
 
 
@@ -24,9 +31,9 @@ def get_lock(process_name):
     get_lock._lock_socket = socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM)
     try:
         get_lock._lock_socket.bind('\0' + process_name)
-        print('Got the lock')
+        logging.info('Got the lock')
     except socket.error:
-        print('Lock already exists, exiting')
+        logging.info('Lock already exists, exiting')
         sys.exit()
 
 
@@ -56,16 +63,19 @@ def write_song(song):
         writer = csv.DictWriter(f, fieldnames)
         if not log_exists:
             writer.writeheader()
+            logging.info('Initialized CSV log')
         writer.writerow(event)
+        logging.info('Saved an entry')
 
 
 def get_current_song(mpd: MPDClient):
     status = mpd.status()
     song = mpd.currentsong()
-    if song:
+    if song and status['state'] != 'stop':
         time_elapsed = float(status['elapsed'])
         song['start_time'] = datetime.now() - timedelta(seconds=int(time_elapsed))
-    return song
+        return song
+    return None
 
 
 def watch(mpd: MPDClient):
@@ -85,6 +95,7 @@ def watch(mpd: MPDClient):
 def connect():
     mpd = MPDClient()
     mpd.connect('localhost', 6600)
+    logging.info('Connect successful, running')
     return mpd
 
 if __name__ == "__main__":
@@ -98,8 +109,8 @@ if __name__ == "__main__":
             mpd = connect()
             watch(mpd)
         except Exception as exp:
-            print(repr(exp))
-            print(f'Waiting {EXCEPTION_TIMEOUT} seconds, error count: {error_count}')
+            logging.error(repr(exp))
+            logging.error(f'Waiting {EXCEPTION_TIMEOUT} seconds, error count: {error_count}')
             time.sleep(EXCEPTION_TIMEOUT)
 
             if (datetime.now() - last_error).seconds > 60:
