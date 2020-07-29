@@ -11,6 +11,7 @@ from mpd import MPDClient
 
 LOG_FILE = '/home/pavel/.mpd/mpd-watcher-log.csv'
 EXCEPTION_TIMEOUT = 5
+EXCEPTION_COUNT = 10
 LISTENED_THRESHOLD = 0.5
 CUSTOM_ATTRS = [
     'musicbrainz_albumid',
@@ -21,7 +22,8 @@ CUSTOM_ATTRS = [
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s %(message)s',
-    datefmt='%Y-%m-%d %H:%M:%S'
+    datefmt='%Y-%m-%d %H:%M:%S',
+    stream=sys.stdout
 )
 
 current_song = None
@@ -117,6 +119,6 @@ if __name__ == "__main__":
                 error_count = 0
             last_error = datetime.now()
             error_count += 1
-            if error_count > 10:
+            if error_count > EXCEPTION_COUNT:
                 raise exp
 
