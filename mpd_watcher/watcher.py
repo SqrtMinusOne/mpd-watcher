@@ -108,7 +108,7 @@ def connect():
     return mpd
 
 
-if __name__ == "__main__":
+def main():
     last_error = datetime.now()
     error_count = 0
 
@@ -120,11 +120,8 @@ if __name__ == "__main__":
             watch(mpd)
         except Exception as exp:
             logging.error(repr(exp))
-            logging.error(
-                'Waiting %s seconds, error count: %s',
-                EXCEPTION_TIMEOUT,
-                error_count
-            )
+            logging.error('Waiting %s seconds, error count: %s',
+                          EXCEPTION_TIMEOUT, error_count)
             time.sleep(EXCEPTION_TIMEOUT)
 
             if (datetime.now() - last_error).seconds > 60:
@@ -133,3 +130,7 @@ if __name__ == "__main__":
             error_count += 1
             if error_count > EXCEPTION_COUNT:
                 raise exp
+
+
+if __name__ == "__main__":
+    main()
