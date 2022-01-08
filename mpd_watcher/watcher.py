@@ -9,13 +9,14 @@ from datetime import datetime, timedelta
 from mpd import MPDClient
 
 # LOG_FILE = '/home/pavel/.mpd/mpd-watcher-log.csv'
-LOG_FOLDER = '/home/pavel/logs-sync/mpd/logs/'
-EXCEPTION_TIMEOUT = 5
-EXCEPTION_COUNT = 10
-LISTENED_THRESHOLD = 0.5
-CUSTOM_ATTRS = [
-    'musicbrainz_albumid', 'musicbrainz_artistid', 'musicbrainz_trackid'
-]
+# LOG_FOLDER = '/home/pavel/logs-sync/mpd/logs/'
+# EXCEPTION_TIMEOUT = 5
+# EXCEPTION_COUNT = 10
+# LISTENED_THRESHOLD = 0.5
+# CUSTOM_ATTRS = [
+#     'musicbrainz_albumid', 'musicbrainz_artistid', 'musicbrainz_trackid'
+# ]
+from mpd_watcher.config import settings
 
 logging.basicConfig(level=logging.INFO,
                     format='%(asctime)s %(message)s',
@@ -27,7 +28,7 @@ current_song = None
 
 def get_log_filename():
     return os.path.join(
-        LOG_FOLDER,
+        settings['LOG_FOLDER'],
         f'{datetime.now().strftime("%Y-%m-%d")}-{socket.gethostname()}-log.csv'
     )
 
@@ -45,7 +46,7 @@ def get_lock(process_name):
 def write_song(song):
     time_listened = (datetime.now() - song['start_time']).seconds
     duration = float(song['duration'])
-    if (time_listened / duration > LISTENED_THRESHOLD):
+    if (time_listened / duration > settings['LISTENED_THRESHOLD']):
         evt_type = 'listened'
     else:
         evt_type = 'skipped'
@@ -59,7 +60,7 @@ def write_song(song):
         'time': song['start_time'].isoformat(' ', 'seconds'),
         'type': evt_type,
         **{attr: song.get(attr, '')
-           for attr in CUSTOM_ATTRS}
+           for attr in settings['CUSTOM_ATTRS']}
     }
 
     fieldnames = event.keys()
@@ -121,14 +122,14 @@ def main():
         except Exception as exp:
             logging.error(repr(exp))
             logging.error('Waiting %s seconds, error count: %s',
-                          EXCEPTION_TIMEOUT, error_count)
-            time.sleep(EXCEPTION_TIMEOUT)
+                          settings['EXCEPTION_TIMEOUT'], error_count)
+            time.sleep(settings['EXCEPTION_TIMEOUT'])
 
             if (datetime.now() - last_error).seconds > 60:
                 error_count = 0
             last_error = datetime.now()
             error_count += 1
-            if error_count > EXCEPTION_COUNT:
+            if error_count > settings['EXCEPTION_COUNT']:
                 raise exp
 
 

@@ -13,6 +13,15 @@ Installation:
 pip install .
 ```
 
+Put the configuration file to cwd or `~/.config/mpd-watcher/settings.toml`. Example config:
+```toml
+log_folder = '/home/pavel/logs-sync/mpd/logs'
+exception_timeout = 5
+exception_count = 10
+listened_threshold = 0.5
+custom_attrs = ['musicbrainz_albumid', 'musicbrainz_artistid', 'musicbrainz_trackid']
+```
+
 Start: `mpd_watcher` or `python -m mpd_watcher`
 
 Example [supervisor](http://supervisord.org/configuration.html) config:
